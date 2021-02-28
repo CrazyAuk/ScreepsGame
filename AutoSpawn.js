@@ -9,23 +9,7 @@ var AutoSpawn = {
 
     run: function(tier) {
      
-        
-        let CreepType[0] = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
-        CreepType[1]= _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
-        CreepType[2] = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
-        console.log('Harvesters: ' + CreepType[0].length'\nBuilders: ' + CreepType[1].length'\nUpgraders: ' + CreepType[3].length);
-
-        for(let spawn in Game.spawns){
-            if (canSpawn == 0) {
-
-                if(CreepType[0]<3){
-
-                }
-            
-                
-            }
-        }
-
+    
 
     }
 }
