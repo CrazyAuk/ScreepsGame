@@ -5,7 +5,7 @@ var spawnManager = require('autoSpawn');
 var harvesterAutoSpawn = require('autoSpawn');
 var builderAutoSpawn = require('autoSpawn');
 var upgraderAutoSpawn = require('autoSpawn');
- 
+
 const T1 = [WORK,CARRY,MOVE];
 const T2 = [WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE];
 
