@@ -21,19 +21,21 @@
 
 var roles = {
     run: function() {
-         if (Memory)
-         Memory.roles = ['harvester', 'builder', 'upgrader'];
-
-         for(let name in Game.creeps) {
+        if (Memory.roles == null){
+            Memory.roles = ['harvester', 'builder', 'upgrader'];
+        }
+        for(let name in Game.creeps) {
             let creep = Game.creeps[name];
-            if(creep.memory.role === 'harvester') {
-                roleHarvester.run(creep);
-            }
-            if(creep.memory.role === 'upgrader') {
-                roleUpgrader.run(creep);
-            }
-            if(creep.memory.role === 'builder') {
-                roleBuilder.run(creep);
+            switch(creep.memory.role){
+                case 'harvester':
+                    roleHarvester.run(creep);
+                    break;
+                case 'upgrader':
+                    roleUpgrader.run(creep);
+                    break;
+                case 'builder':
+                    roleBuilder.run(creep);
+                    break;
             }
         }
     }
@@ -61,10 +63,8 @@ var roleBuilder = {
         //bascule entre mode construction et récupération de ressources
         if(creep.store[RESOURCE_ENERGY] == 0){
             creep.memory.building = false;
-        } else {
-            if(!creep.memory.building){
-                creep.memory.building = true;
-            }
+        } else if(!creep.memory.building){
+            creep.memory.building = true;
         }
 
         //if{..} -> mode construction
@@ -87,7 +87,7 @@ var roleBuilder = {
                 }
             });
             if (roomStorageStructure != null) {
-                let nearestStorage = creep.pos.findClosestByRange(roomStorageStructure);
+                let nearestStorage = creep.pos.findClosestByPath(roomStorageStructure);
                 if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(nearestStorage, {visualizePathStyle: {stroke: '#ffffff'}});
                 }
@@ -115,10 +115,8 @@ var roleUpgrader = {
         //bascule entre le mode 'upgrade' et récupération de ressources 
         if(creep.store[RESOURCE_ENERGY] == 0){
             creep.memory.upgrading = false;
-        } else {
-            if(!creep.memory.upgrading){
-                creep.memory.upgrading = true;
-            }
+        } else if(!creep.memory.upgrading){
+            creep.memory.upgrading = true;
         }
 
         //if{..} -> mode 'upgrade'
@@ -138,7 +136,7 @@ var roleUpgrader = {
                 }
             });
             if (roomStorageStructure != null) {
-                let nearestStorage = creep.pos.findClosestByRange(roomStorageStructure);
+                let nearestStorage = creep.pos.findClosestByPath(roomStorageStructure);
                 if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(nearestStorage, {visualizePathStyle: {stroke: '#ffffff'}});
                 }
