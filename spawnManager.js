@@ -55,7 +55,7 @@ var spawnManager = {
             if (harvester.length < 5) {
                 harvesterSpawn.run(spawner,tier);
             } else {
-                if (builder.length < 1) {
+                if (builder.length < 2) {
                     builderSpawn.run(spawner,tier);
                 } else {
                     if (upgrader.length === 0) {

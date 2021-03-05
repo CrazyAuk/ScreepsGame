@@ -21,9 +21,7 @@
 
 var roles = {
     run: function() {
-
-        //let Memory.buildingTask = Game.room.find(FIND_CONSTRUCTION_SITES);
-        
+      
         if (Memory.roles == null){
             Memory.roles = ['harvester', 'builder', 'upgrader'];
         }
