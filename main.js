@@ -1,9 +1,6 @@
 var roleManager = require('roleManager');
 var spawnManager = require('spawnManager');
 var taskManager = require('taskManager');
-var analyse = require('analyse');
-var sourceAnalyse = require('analyse');
-var roomAnalyse = require('analyse');
 var scanTest = require ('scan');
 
 const BODYTYPE_TIER_1 = [WORK,CARRY,MOVE];
