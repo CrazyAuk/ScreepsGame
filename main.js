@@ -8,6 +8,7 @@ const BODYTYPE_TIER_2 = [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE];
 
 module.exports.loop = function () {
     
+    scanTest.run();
     spawnManager.run(BODYTYPE_TIER_2);
     roleManager.run();
     //taskManager.run();
@@ -17,5 +18,5 @@ module.exports.loop = function () {
     //roomAnalyse.run();
     
     
-    scanTest.run();
+    
 }

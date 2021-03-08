@@ -23,23 +23,29 @@ var roles = {
     run: function() {
 
         //let Memory.buildingTask = Game.room.find(FIND_CONSTRUCTION_SITES);
-        
+
         if (Memory.roles == null){
-            Memory.roles = ['harvester', 'builder', 'upgrader'];
+            Memory.roles = ['harvester', 'builder', 'upgrader', 'repairer'];
         }
         for(let name in Game.creeps) {
             let creep = Game.creeps[name];
+            //let CPU = Game.cpu.getUsed();
             switch(creep.memory.role){
                 case 'harvester':
                     roleHarvester.run(creep);
                     break;
                 case 'upgrader':
                     roleUpgrader.run(creep);
+                    Game.cpu.getUsed();
                     break;
                 case 'builder':
                     roleBuilder.run(creep);
                     break;
+                case 'repairer':
+                    roleRepairDrone.run(creep);
+                    break;
             }
+            //console.log('CPU used for ' + Game.creeps[name] + ' : ' + (Game.cpu.getUsed()-CPU));
         }
     }
 };
@@ -73,27 +79,56 @@ var roleBuilder = {
         //if{..} -> mode construction
         //else{...} -> mode récupération de ressources
 	    if(creep.memory.building) {
-	        creep.say('🚧 build');
-            let target = buildingTask[0];
-            if(target != null) {
-                if(creep.build(target) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
-                }
-	        }
-	    } else {
-            creep.say('🔄 pickup');
-            let roomStorageStructure = creep.room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return (structure.structureType == STRUCTURE_STORAGE ||
-                        structure.structureType == STRUCTURE_CONTAINER) && 
-                        (structure.store.getFreeCapacity(RESOURCE_ENERGY) != structure.store.getCapacity(RESOURCE_ENERGY)) ;
-                }
+
+            let target = {};
+            let listHP = [];
+            let listMP = [];
+            let listBP = [];
+            let hautePrio = Memory.Rooms[creep.room.name].FileDeConstruction.HautePriorité;
+            let moyennePrio = Memory.Rooms[creep.room.name].FileDeConstruction.MoyennePriorité;
+            let bassePrio = Memory.Rooms[creep.room.name].FileDeConstruction.BassePriorité;
+
+            _.forEach(hautePrio, (structure) =>{
+                listHP.push(structure.id);
             });
-            if (roomStorageStructure != null) {
-                let nearestStorage = creep.pos.findClosestByPath(roomStorageStructure);
-                if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestStorage, {visualizePathStyle: {stroke: '#ffffff'}});
-                }
+            _.forEach(moyennePrio, (structure) =>{
+                listMP.push(structure.id);
+            });
+            _.forEach(bassePrio, (structure) =>{
+                listBP.push(structure.id);
+            });
+
+            if(listHP == []){
+                target = Game.getObjectById(listHP[0]);
+	        } else if(listMP !== []){
+                target = Game.getObjectById(listMP[0]);
+            } else if(listBP !== []){
+                target = Game.getObjectById(listBP[0]);
+            }
+;
+            if(creep.build(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            }
+            
+	    } else {
+            let container = {};
+            let storage = {};
+            let nearestStorage = {};
+            let roomStorageStructure = {};
+            let storingStructures = Memory.Rooms[creep.room.name].Structures.container;
+            _.forEach(storingStructures, (structure,index) =>{
+                container[index] = Game.getObjectById(structure.id);
+            });
+            if(storage === {}){
+                roomStorageStructure = container;
+            } else {
+                roomStorageStructure = Object.assign(container, storage);
+            }
+            nearestStorage = creep.pos.findClosestByPath(roomStorageStructure, {
+                filter: (structure) => {return (structure.store.getFreeCapacity(RESOURCE_ENERGY) != structure.store.getCapacity(RESOURCE_ENERGY))}
+            });
+            if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(nearestStorage);
             }   
         }
 	}
@@ -125,26 +160,30 @@ var roleUpgrader = {
         //if{..} -> mode 'upgrade'
         //else{...} -> mode récupération de ressources
 	    if(creep.memory.upgrading) {
-	        creep.say('🚧 upgrade');
             if(creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(creep.room.controller, {visualizePathStyle: {stroke: '#ffffff'}});
+                creep.moveTo(creep.room.controller);
             }
 	    } else {
-            creep.say('🔄 pickup');
-            let roomStorageStructure = creep.room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-                return (structure.structureType == STRUCTURE_STORAGE ||
-                        structure.structureType == STRUCTURE_CONTAINER) && 
-                        (structure.store.getFreeCapacity(RESOURCE_ENERGY) != structure.store.getCapacity(RESOURCE_ENERGY)) ;
-                }
+            let container = {};
+            let storage = {};
+            let nearestStorage = {};
+            let roomStorageStructure = {};
+            let storingStructures = Memory.Rooms[creep.room.name].Structures.container;
+            _.forEach(storingStructures, (structure,index) =>{
+                container[index] = Game.getObjectById(structure.id);
             });
-            if (roomStorageStructure != null) {
-                let nearestStorage = creep.pos.findClosestByPath(roomStorageStructure);
-                if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(nearestStorage, {visualizePathStyle: {stroke: '#ffffff'}});
-                }
+            if(storage === {}){
+                roomStorageStructure = container;
+            } else {
+                roomStorageStructure = Object.assign(container, storage);
+            }
+            nearestStorage = creep.pos.findClosestByPath(roomStorageStructure, {
+                filter: (structure) => {return (structure.store.getFreeCapacity(RESOURCE_ENERGY) != structure.store.getCapacity(RESOURCE_ENERGY))}
+            });
+            if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(nearestStorage);
             }   
-        }
+        }  
 	}
 };
 
@@ -164,40 +203,150 @@ var roleHarvester = {
     /** @param {Creep} creep **/
     run: function(creep) {
 
-        let targets = null;
+        let target = {};
+
+        if(creep.store[RESOURCE_ENERGY] == 0){
+            creep.memory.harvesting = true;
+        } else if(!creep.memory.building){
+            creep.memory.harvesting = false;
+        }
+
+        console.log("Memory.Sources : " + JSON.stringify(Memory.Rooms[creep.room.name].Sources))
 
         //if{..} -> mode minage de ressources
         //else{...} -> mode transfert de ressources
-	    if (creep.store.getFreeCapacity() > 0) {
-            creep.say('⚡ harvest');
-            let sources = creep.room.find(FIND_SOURCES);
-            if (creep.harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(sources[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+	    if (creep.memory.harvesting) {
+            let sourcesList = Memory.Rooms[creep.room.name].Sources; // BUG ICI
+            
+            _.forEach(sourcesList, (source) =>{
+                if(source.nbMineur < source.nbMineurMax) {
+                    target = Game.getObjectById(source.id);
+                    source.nbMineur = source.nbMineur + 1;
+                    return false;
+                }
+            });
+            if (creep.harvest(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
             }
         } else {
-            targets = creep.room.find(FIND_STRUCTURES, {
-                    filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_EXTENSION ||
-                                structure.structureType == STRUCTURE_SPAWN) && 
-                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-                    }
+
+            let storageAndContainer = [];
+            let spawnAndExtension = [];
+            let nearestStorage = {};
+            let storingStructures = {};
+
+            //console.log(JSON.stringify(Memory.Rooms[creep.room].Structures));
+
+            storingStructures = Memory.Rooms[creep.room.name].Structures.container;
+            _.forEach(storingStructures, (structure) =>{
+                if(structure.storedEnergy < structure.maxCapacity) storageAndContainer.push(structure.id);
             });
-            //si aucun 'Spawn' et aucune 'Extension' ne sont pas plein(e)
-            if(targets.length == 0) {
-                targets = creep.room.find(FIND_STRUCTURES, {
-                    filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_STORAGE ||
-                                structure.structureType == STRUCTURE_CONTAINER) && 
-                                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-                    }
-                });
+
+            storingStructures = Memory.Rooms[creep.room.name].Structures.storage;
+            _.forEach(storingStructures, (structure) =>{
+                if(structure.storedEnergy < structure.maxCapacity) storageAndContainer.push(structure.id);
+            });
+
+            storingStructures = Memory.Rooms[creep.room.name].Structures.spawn;
+            _.forEach(storingStructures, (structure) =>{
+                if(structure.storedEnergy < structure.maxCapacity) spawnAndExtension.push(structure.id);
+            });
+
+            storingStructures = Memory.Rooms[creep.room.name].Structures.extension;
+            _.forEach(storingStructures, (structure) =>{
+                if(structure.storedEnergy < structure.maxCapacity) spawnAndExtension.push(structure.id);
+            });
+
+            if(spawnAndExtension !== []){
+                target = spawnAndExtension;
+            } else {
+                target = storageAndContainer;
             }
-            if (targets.length > 0) {
-                creep.say('🔄 tranfer');
-                if (creep.transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
-                }
+            nearestStorage = creep.pos.findClosestByPath(target);
+            if (creep.transfer(nearestStorage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(nearestStorage);
             }
+        }
+	}
+};
+
+/*---------------------------------------------------------------------------------------------------------------------------------*/
+/*
+ * Role RepairDrone
+ * 
+ * Fonctionnement: 
+ * Le 'RepairDrone' récuperrera de l'énergie du stockage (hors spawns et extensions) le plus proche afin
+ * de construire les batiments de la liste 'BuildingTask'. Cette liste sera générée (avec priorités)
+ * dans le module de gestion de taches.
+ * 
+ */
+
+var roleRepairDrone = {
+
+    /** @param {Creep} creep **/
+    run: function(creep) {
+
+        //bascule entre mode réparation et récupération de ressources
+        if(creep.store[RESOURCE_ENERGY] == 0){
+            creep.memory.repairing = false;
+        } else if(!creep.memory.building){
+            creep.memory.repairing = true;
+        }
+
+        //if{..} -> mode réparation
+        //else{...} -> mode récupération de ressources
+	    if(creep.memory.repairing) {
+
+            let target = {};
+            let listHP = [];
+            let listMP = [];
+            let listBP = [];
+            let hautePrio = Memory.Rooms[creep.room.name].FileDeReparation.HautePriorité;
+            let moyennePrio = Memory.Rooms[creep.room.name].FileDeReparation.MoyennePriorité;
+            let bassePrio = Memory.Rooms[creep.room.name].FileDeReparation.BassePriorité;
+
+            _.forEach(hautePrio, (structure) =>{
+                listHP.push(structure.id);
+            });
+            _.forEach(moyennePrio, (structure) =>{
+                listMP.push(structure.id);
+            });
+            _.forEach(bassePrio, (structure) =>{
+                listBP.push(structure.id);
+            });
+
+            if(listHP === []){
+                target = Game.getObjectById(listHP[0]);
+	        } else if(listMP === []){
+                target = Game.getObjectById(listMP[0]);
+            } else if(listBP !== []){
+                target = Game.getObjectById(listBP[0]);
+            }
+
+            if(creep.repair(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            }
+
+	    } else {
+            let container = {};
+            let storage = {};
+            let nearestStorage = {};
+            let roomStorageStructure = {};
+            let storingStructures = Memory.Rooms[creep.room.name].Structures.container;
+            _.forEach(storingStructures, (structure,index) =>{
+                container[index] = Game.getObjectById(structure.id);
+            });
+            if(storage === {}){
+                roomStorageStructure = container;
+            } else {
+                roomStorageStructure = Object.assign(container, storage);
+            }
+            nearestStorage = creep.pos.findClosestByPath(roomStorageStructure, {
+                filter: (structure) => {return (structure.store.getFreeCapacity(RESOURCE_ENERGY) != structure.store.getCapacity(RESOURCE_ENERGY))}
+            });
+            if (creep.withdraw(nearestStorage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(nearestStorage);
+            }   
         }
 	}
 };

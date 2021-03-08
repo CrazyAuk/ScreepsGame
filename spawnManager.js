@@ -50,18 +50,17 @@ var spawnManager = {
         let harvester = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
         let builder = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
         let upgrader = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+        let repairer = _.filter(Game.creeps, (creep) => creep.memory.role == 'repairer');
         
         if (spawner != null) {
             if (harvester.length < 5) {
                 harvesterSpawn.run(spawner,tier);
-            } else {
-                if (builder.length < 1) {
-                    builderSpawn.run(spawner,tier);
-                } else {
-                    if (upgrader.length === 0) {
-                        upgraderSpawn.run(spawner,tier);
-                    }
-                }
+            } else if (builder.length < 1) {
+                builderSpawn.run(spawner,tier);
+            } else if (upgrader.length === 0) {
+                upgraderSpawn.run(spawner,tier);
+            } else if (repairer.length < 2) {
+                repairerSpawn.run(spawner,tier);
             }
         }
     }
@@ -133,6 +132,30 @@ var harvesterSpawn = {
         let newName = 'Harvester' + Game.time;
         //console.log('Spawning new harvester: ' + newName);
         spawner.spawnCreep(tier, newName, {memory: {role: 'harvester'}});
+    }
+}
+
+
+/*---------------------------------------------------------------------------------------------------------------------------------*/
+/*
+ * Spawn de Upgrader
+ * 
+ * Fonctionnement: 
+ * Affecte: un nom en fonction du 'tick' de la partie ('Game.time'), un template de 'Bodypart'
+ * en fonction du 'Tier' ainsi que le role 'upgrader' .
+ * 
+ */
+
+var repairerSpawn = {
+
+    run: function(spawner,tier) {
+    
+        //var upgrader = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
+        //console.log('Upgraders: ' + upgrader.length);
+            
+        let newName = 'Repairer' + Game.time;
+        //console.log('Spawning new upgrader: ' + newName);
+        spawner.spawnCreep(tier, newName, {memory: {role: 'repairer'}});
     }
 }
 
