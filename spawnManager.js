@@ -2,16 +2,14 @@
  * Module de gestion de 'Spawn' de 'Creep'
  * 
  * Spawn pour Rôles actifs:
- *  - Builder : 2
+ *  - Builder : 1
  *  - Upgrader : 1
- *  - Harvester : 5
+ *  - Harvester : 2
+ *  - Carrier : 2
+ *  - Repairer : 2
  * 
- * Tier sera à modifier dans le main. A terme le Tier sera géré via le niveau du 'Controler'
- * de la salle principale ou 'Hub'.
- * 
- * TODO: 
- *  - affecter des variables aux nombres de 'Creep' par rôle
- *  - créer une liste de rôle pour l'utiliser dans la récupération du nombre de 'Creep'
+ *  TODO:
+ *  - nothing for now
  * 
  */
 
@@ -26,23 +24,15 @@ var spawnManager = {
                 console.log('Clearing non-existing creep memory:', name);
             }
         }
-        
-        let spawner = null;
-        
+
         for(let name in Game.spawns){
-            let canSpawn = Game.spawns[name].spawnCreep(tier, 'test', { dryRun: true });
-            if (canSpawn === 0) {
-                spawner = Game.spawns[name];
-                break;
-            } else {
-                if (Game.spawns[name].spawning) {
-                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
-                    Game.spawns[name].room.visual.text(
-                        '🛠️' + spawningCreep.memory.role,
-                        Game.spawns[name].pos.x + 1, 
-                        Game.spawns[name].pos.y, 
-                        {align: 'left', opacity: 0.8});
-                }
+            if (Game.spawns[name].spawning) {
+                let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                Game.spawns[name].room.visual.text(
+                    '🛠️' + spawningCreep.memory.role,
+                    Game.spawns[name].pos.x + 1, 
+                    Game.spawns[name].pos.y, 
+                    {align: 'left', opacity: 0.8});
             }
         }
         
@@ -51,18 +41,19 @@ var spawnManager = {
         let builder = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
         let upgrader = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
         let repairer = _.filter(Game.creeps, (creep) => creep.memory.role == 'repairer');
+        let carrier = _.filter(Game.creeps, (creep) => creep.memory.role == 'carrier');
         
-        if (spawner != null) {
-            if (harvester.length < 5) {
-                harvesterSpawn.run(spawner,tier);
-            } else if (builder.length < 1) {
-                builderSpawn.run(spawner,tier);
-            } else if (upgrader.length === 0) {
-                upgraderSpawn.run(spawner,tier);
-            } else if (repairer.length < 2) {
-                repairerSpawn.run(spawner,tier);
-            }
-        }
+        if (harvester.length < 2) {
+            harvesterSpawn.run(tier);
+        } else if (carrier.length < 3) {
+            carrierSpawn.run(tier);
+        } else if (builder.length < 1) {
+            builderSpawn.run(tier);
+        } else if (upgrader.length < 1) {
+            upgraderSpawn.run(tier);
+        } else if (repairer.length < 1) {
+            repairerSpawn.run(tier);
+        } 
     }
 }
 
@@ -78,14 +69,48 @@ var spawnManager = {
 
 var upgraderSpawn = {
 
-    run: function(spawner,tier) {
-    
-        //var upgrader = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
-        //console.log('Upgraders: ' + upgrader.length);
-            
-        let newName = 'Upgrader' + Game.time;
-        //console.log('Spawning new upgrader: ' + newName);
-        spawner.spawnCreep(tier, newName, {memory: {role: 'upgrader'}});
+    run: function(tier) {
+
+        let bodyTemplate = [];
+
+        switch(tier){
+            case 1:
+                bodyTemplate = [MOVE, WORK, CARRY];
+                break;
+            case 2:
+                bodyTemplate = [MOVE, MOVE,	MOVE, MOVE, WORK, WORK, CARRY, CARRY, CARRY];
+                break;
+            case 3:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY];
+                break;
+            default:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK,
+                    CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+        }
+
+        let spawner = null;
+        
+        for(let name in Game.spawns){
+            let canSpawn = Game.spawns[name].spawnCreep(bodyTemplate, 'test', { dryRun: true });
+            if (canSpawn === 0) {
+                let newName = 'Upgrader' + Game.time;
+                Game.spawns[name].spawnCreep(bodyTemplate, newName, {memory: {role: 'upgrader'}});
+                break;
+            } else {
+                if (Game.spawns[name].spawning) {
+                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                    Game.spawns[name].room.visual.text(
+                        '🛠️' + spawningCreep.memory.role,
+                        Game.spawns[name].pos.x + 1, 
+                        Game.spawns[name].pos.y, 
+                        {align: 'left', opacity: 0.8});
+                }
+            }
+        }
+         
+        
+
     }
 }
 
@@ -101,14 +126,48 @@ var upgraderSpawn = {
 
 var builderSpawn = {
 
-    run: function(spawner,tier) {
+    run: function(tier) {
+
+        let bodyTemplate = [];
+
+        switch(tier){
+            case 1:
+                bodyTemplate = [MOVE, WORK, CARRY];
+                break;
+            case 2:
+                bodyTemplate = [MOVE, MOVE,	MOVE, MOVE, WORK, WORK, CARRY, CARRY, CARRY];
+                break;
+            case 3:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY];
+                break;
+            default:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK,
+                    CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+        }
+
+        let spawner = null;
+        
+        for(let name in Game.spawns){
+            let canSpawn = Game.spawns[name].spawnCreep(bodyTemplate, 'test', { dryRun: true });
+            if (canSpawn === 0) {
+                let newName = 'Builder' + Game.time;
+                Game.spawns[name].spawnCreep(bodyTemplate, newName, {memory: {role: 'builder', building: null}});
+                break;
+            } else {
+                if (Game.spawns[name].spawning) {
+                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                    Game.spawns[name].room.visual.text(
+                        '🛠️' + spawningCreep.memory.role,
+                        Game.spawns[name].pos.x + 1, 
+                        Game.spawns[name].pos.y, 
+                        {align: 'left', opacity: 0.8});
+                }
+            }
+        }
     
-        //var builder = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder');
-        //console.log('Builders: ' + builder.length);
-    
-        let newName = 'Builder' + Game.time;
-        //console.log('Spawning new builder: ' + newName);
-        spawner.spawnCreep(tier, newName, {memory: {role: 'builder', building: null}});
+        
+
     }
 }
 
@@ -124,38 +183,154 @@ var builderSpawn = {
 
 var harvesterSpawn = {
 
-    run: function(spawner,tier) {
-    
-        //var harvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
-        //console.log('Harvesters: ' + harvesters.length);
-    
-        let newName = 'Harvester' + Game.time;
-        //console.log('Spawning new harvester: ' + newName);
-        spawner.spawnCreep(tier, newName, {memory: {role: 'harvester'}});
+    run: function(tier) {
+
+        let bodyTemplate = [];
+
+        switch(tier){
+            case 1:
+                bodyTemplate = [MOVE, WORK, WORK, CARRY];
+                break;
+            case 2:
+                bodyTemplate = [MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY];
+                break;
+            case 3:
+                bodyTemplate = [MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY];
+                break;
+            default:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK,
+                    CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+        }
+        
+        for(let name in Game.spawns){
+            let canSpawn = Game.spawns[name].spawnCreep(bodyTemplate, 'test', { dryRun: true });
+            if (canSpawn === 0) {
+                let newName = 'Harvester' + Game.time;
+                Game.spawns[name].spawnCreep(bodyTemplate, newName, {memory: {role: 'harvester'}});
+                break;
+            } else {
+                if (Game.spawns[name].spawning) {
+                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                    Game.spawns[name].room.visual.text(
+                        '🛠️' + spawningCreep.memory.role,
+                        Game.spawns[name].pos.x + 1, 
+                        Game.spawns[name].pos.y, 
+                        {align: 'left', opacity: 0.8});
+                }
+            }
+        }
     }
 }
 
 
 /*---------------------------------------------------------------------------------------------------------------------------------*/
 /*
- * Spawn de Upgrader
+ * Spawn de Repairer
  * 
  * Fonctionnement: 
  * Affecte: un nom en fonction du 'tick' de la partie ('Game.time'), un template de 'Bodypart'
- * en fonction du 'Tier' ainsi que le role 'upgrader' .
+ * en fonction du 'Tier' ainsi que le role 'Repairer' .
  * 
  */
 
 var repairerSpawn = {
 
-    run: function(spawner,tier) {
-    
-        //var upgrader = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader');
-        //console.log('Upgraders: ' + upgrader.length);
-            
-        let newName = 'Repairer' + Game.time;
-        //console.log('Spawning new upgrader: ' + newName);
-        spawner.spawnCreep(tier, newName, {memory: {role: 'repairer'}});
+    run: function(tier) {
+
+        let bodyTemplate = [];
+
+        switch(tier){
+            case 1:
+                bodyTemplate = [MOVE, WORK, CARRY];
+                break;
+            case 2:
+                bodyTemplate = [MOVE, MOVE,	MOVE, MOVE, WORK, WORK, CARRY, CARRY, CARRY];
+                break;
+            case 3:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY];
+                break;
+            default:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK, WORK, WORK,
+                    CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+        }
+        
+        for(let name in Game.spawns){
+            let canSpawn = Game.spawns[name].spawnCreep(bodyTemplate, 'test', { dryRun: true });
+            if (canSpawn === 0) {
+                let newName = 'Repairer' + Game.time;
+                Game.spawns[name].spawnCreep(bodyTemplate, newName, {memory: {role: 'repairer'}});
+                break;
+            } else {
+                if (Game.spawns[name].spawning) {
+                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                    Game.spawns[name].room.visual.text(
+                        '🛠️' + spawningCreep.memory.role,
+                        Game.spawns[name].pos.x + 1, 
+                        Game.spawns[name].pos.y, 
+                        {align: 'left', opacity: 0.8});
+                }
+            }
+        }
+    }
+}
+
+/*---------------------------------------------------------------------------------------------------------------------------------*/
+/*
+ * Spawn de Carrier
+ * 
+ * Fonctionnement: 
+ * Affecte: un nom en fonction du 'tick' de la partie ('Game.time'), un template de 'Bodypart'
+ * en fonction du 'Tier' ainsi que le role 'Carrier' .
+ * 
+ */
+
+var carrierSpawn = {
+
+    run: function(tier) {
+
+        let bodyTemplate = [];
+
+        switch(tier){
+            case 1:
+                bodyTemplate = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
+                break;
+            case 2:
+                bodyTemplate = [MOVE, MOVE,	MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+            case 3:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+                    CARRY, CARRY];
+                break;
+            case 4:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY,
+                    CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+            default:
+                bodyTemplate = [MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+                    MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+                    CARRY, CARRY, CARRY, CARRY, CARRY, CARRY];
+                break;
+        }
+        
+        for(let name in Game.spawns){
+            let canSpawn = Game.spawns[name].spawnCreep(bodyTemplate, 'test', { dryRun: true });
+            if (canSpawn === 0) {
+                let newName = 'Carrier' + Game.time;
+                Game.spawns[name].spawnCreep(bodyTemplate, newName, {memory: {role: 'carrier', transportingTo : {}}});
+                break;
+            } else {
+                if (Game.spawns[name].spawning) {
+                    let spawningCreep = Game.creeps[Game.spawns[name].spawning.name];
+                    Game.spawns[name].room.visual.text(
+                        '🛠️' + spawningCreep.memory.role,
+                        Game.spawns[name].pos.x + 1, 
+                        Game.spawns[name].pos.y, 
+                        {align: 'left', opacity: 0.8});
+                }
+            }
+        }
     }
 }
 
